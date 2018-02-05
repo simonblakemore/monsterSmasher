@@ -3,6 +3,7 @@
 <link rel="stylesheet" href="monsterSmash.css">
 
 <div id="stage"></div>
+<p id="output"></p>
 
 <canvas width="128" height+"128"></canvas>
 
@@ -127,6 +128,36 @@ let monster = {
   }
 };
 
+let gameTimer =
+{
+  time: 0,
+  interval: undefined,
+
+  start: function()
+  {
+    let self = this;
+    this.interval = setInterval(function(){self.tick();}, 1000);
+  },
+
+  tick: function()
+  {
+    this.time--;
+  },
+
+  stop: function()
+  {
+    clearInterval(this.interval);
+  },
+
+  reset: function()
+  {
+    this.time = 0;
+  }
+};
+
+//Define output
+let output = document.querySelector("#output");
+
 //Load the animation tilesheet
 let image = new Image();
 image.addEventListener("load", loadHandler, false);
@@ -146,12 +177,17 @@ let monsterDrawingSurfaces = [];
 //A variable for the animation interval
 let interval;
 
-
+//Set a hit counter
+let monstersHit = 0;
 
 function loadHandler()
 {
   //Plot the grid of monsters
   buildMap();
+
+  //Start the game timer
+  gameTimer.time = 30;
+  gameTimer.start();
 
   //Start the animation
   updateAnimation();
@@ -193,13 +229,22 @@ function buildMap()
 
 function updateAnimation()
 {
-  //Set a timer to call updateAnimation every 120 milliseconds
-  setTimeout(updateAnimation, 120);
+  //Call updateAnimation every 120 milliseconds while the timer is greater than zero
+  if(gameTimer.time > 0)
+  {
+    setTimeout(updateAnimation, 120);
+  }
 
   //Loop through all the monsters in the monsters array and call their updateAnimation methods
   for(let i = 0; i < monsterObjects.length; i++)
   {
     monsterObjects[i].updateAnimation();
+  }
+
+  //Check for the end of the game
+  if(gameTimer.time ===0)
+  {
+    endGame();
   }
 
   //Render the animations
@@ -221,8 +266,22 @@ function mousedownHandler(event)
       if(monster.state === monster.JUMPING)
       {
         monster.state = monster.HIT;
+        monstersHit++;
       }
     }
+  }
+}
+
+function endGame()
+{
+  //Stop the game timer
+  gameTimer.stop();
+
+  //Remove the mousedown listener from the canvas tags so that they cant be clicked
+  for(let i = 0; i < monsterCanvases.length; i++)
+  {
+    let canvas = monsterCanvases[i];
+    canvas.removeEventListener("mousedown", mousedownHandler, false);
   }
 }
 
@@ -245,6 +304,10 @@ function render()
       0, 0, SIZE, SIZE
     );
   }
+
+  //Display the output
+  output.innerHTML = "Monsters smashed: " + monstersHit
+  + "<br>Time left: " + gameTimer.time;
 }
 
 
