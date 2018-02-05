@@ -1,0 +1,15 @@
+#stage
+{
+  position: relative;
+  width: 552px;
+  height: 414px;
+}
+
+canvas
+{
+  display: block;
+  position: absolute;
+  width: 128px;
+  height: 128px;
+  cursor: pointer;
+}
