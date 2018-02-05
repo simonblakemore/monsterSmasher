@@ -27,10 +27,17 @@ let monster = {
   //States
   HIDING: 0,
   JUMPING: 1,
+  HIT: 2,
   state: this.HIDING,
+
+  //Properties needed to help reset the animation
+  timeToReset: 9,
+  resetCounter: 0,
 
   //A propery to stor the fandom timer
   waitTime: undefined,
+
+
 
   //A method to find a random animation start time
   findWaitTime: function()
@@ -42,14 +49,21 @@ let monster = {
   updateAnimation: function()
   {
 
+    //Find the frame's correct column and row on the tilesheet
+    this.sourceX = Math.floor(this.currentFrame % this.COLUMNS) * this.SIZE;
+    this.sourceY = Math.floor(this.currentFrame / this.COLUMNS) * this.SIZE;
+
     //Figure out the monster's state
-    if(this.waitTime > 0 || this.waitTime === undefined)
+    if(this.state !== this.HIT)
     {
-      this.state = this.HIDING;
-    }
-    else
-    {
-      this.state = this.JUMPING;
+      if(this.waitTime > 0 || this.waitTime === undefined)
+      {
+        this.state = this.HIDING;
+      }
+      else
+      {
+        this.state = this.JUMPING;
+      }
     }
 
     //Switch the mosters action based on its state
@@ -87,11 +101,25 @@ let monster = {
         {
           this.currentFrame--;
         }
-    }
 
-    //Find the frame's correct column and row on the tilesheet
-    this.sourceX = Math.floor(this.currentFrame % this.COLUMNS) * this.SIZE;
-    this.sourceY = Math.floor(this.currentFrame / this.COLUMNS) * this.SIZE;
+      case this.HIT:
+        //Set the current frame to the last one on the tilesheet to display the explosion image
+        this.currentFrame = 6;
+
+        //Update the resetCounter by 1
+        this.resetCounter++;
+
+        //Reset the animation if the resetCounter equals the timeToReset
+        if(this.resetCounter === this.timeToReset)
+        {
+          this.state = this.HIDING;
+          this.forward = true;
+          this.currentFrame = 0;
+          this.resetCounter = 0;
+          this.findWaitTime();
+        }
+        break;
+    }
   }
 };
 
@@ -99,13 +127,21 @@ let monster = {
 let canvas = document.querySelector("canvas");
 let drawingSurface = canvas.getContext("2d");
 
+//Set mousedown event listener
+canvas.addEventListener("mousedown", mousedownHandler, false);
+
 //Load the animation tilesheet
 let image = new Image();
 image.addEventListener("load", loadHandler, false);
 image.src = monster.IMAGE;
 
+
+
 function loadHandler()
 {
+  //Find a random wait time
+  monster.findWaitTime();
+  
   //Start the animation
   updateAnimation();
 }
@@ -113,13 +149,21 @@ function loadHandler()
 function updateAnimation()
 {
   //Set a timer to call updateAnimation every 300 milliseconds
-  setTimeout(updateAnimation, 300);
+  setTimeout(updateAnimation, 120);
 
   //Update the monster's animation frames
   monster.updateAnimation();
 
   //Render the animations
   render();
+}
+
+function mousedownHandler(event)
+{
+  if(monster.state === monster.JUMPING)
+  {
+    monster.state = monster.HIT;
+  }
 }
 
 function render()
